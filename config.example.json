@@ -1,0 +1,9 @@
+{
+    "databaseConfig": {
+        "dialect": "sqlite",
+        "storage": "test.sqlite"
+    },
+    "sessionSecret": "yoursecretpasswordhere",
+    "saltRounds": 10,
+    "port": 8080
+}
