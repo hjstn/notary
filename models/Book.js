@@ -16,7 +16,7 @@ class Book extends Model {
 
 module.exports = {
     model: Book,
-    init: sequelize => User.init({
+    init: sequelize => Book.init({
         id: {
             primaryKey: true,
             type: DataTypes.UUID,
@@ -35,10 +35,10 @@ module.exports = {
         modelName: 'Book'
     }),
     create: data => {
-        return User.create(data);
+        return Book.create(data);
     },
     findID: id => {
-        return User.findByPk(id);
+        return Book.findByPk(id);
     }
 }
 

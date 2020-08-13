@@ -24,7 +24,7 @@ app.use(expressSession({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use('books', express.static('books'));
+app.use('/books', express.static('books'));
 
 app.get('/', (req, res) => {
     if (!('userID' in req.session)) return res.redirect('/login');
@@ -117,6 +117,21 @@ app.route('/book/:bookID?/').get((req, res) => {
         } else {
             res.sendStatus(401);
         }
+    });
+});
+
+app.get('/books', (req, res) => {
+    if (!req.session || !req.session.userID) return res.sendStatus(401);
+
+    database.models.User.findID(req.session.userID).then(actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        database.models.Book.model.findAll().then(books => {
+            res.send(books.map(book => book.getData()));
+        });
     });
 });
 
@@ -286,6 +301,25 @@ app.route('/class/:classID?').get((req, res) => {
             } else {
                 res.sendStatus(401);
             }
+        });
+    });
+});
+
+app.get('/classes', (req, res) => {
+    if (!req.session || !req.session.userID) return res.sendStatus(401);
+
+    database.models.User.findID(req.session.userID).then(actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        database.models.Class.model.findAll().then(async classes => {
+            res.send(await Promise.all(classes.filter(async dbClass => {
+                (await dbClass.getUsers()).reduce((has, user) => has || user.id === req.session.userID, false)
+            }).map(async dbClass => {
+                return await dbClass.getData();
+            })));
         });
     });
 });

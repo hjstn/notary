@@ -12,6 +12,7 @@ class Database {
         this.sequelize = new Sequelize(config.databaseConfig);
 
         this.models = {
+            Book,
             User,
             Class,
             ClassUser
@@ -19,6 +20,7 @@ class Database {
 
         this.sequelize.authenticate();
 
+        Book.init(this.sequelize);
         User.init(this.sequelize);
         Class.init(this.sequelize);
         ClassUser.init(this.sequelize);
