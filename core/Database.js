@@ -1,5 +1,6 @@
 const { Sequelize } = require('sequelize');
 
+const Book = require('../models/Book');
 const User = require('../models/User');
 const Class = require('../models/Class');
 const ClassUser = require('../models/ClassUser');

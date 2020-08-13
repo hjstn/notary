@@ -24,6 +24,8 @@ app.use(expressSession({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use('books', express.static('books'));
+
 app.get('/', (req, res) => {
     if (!('userID' in req.session)) return res.redirect('/login');
 
@@ -53,15 +55,69 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-app.route('/book/:bookID?').get((req, res) => {
-    // TODO
-    res.sendFile('test.epub');
+app.route('/book/:bookID?/').get((req, res) => {
+    if (!req.params || !req.params.bookID) return res.sendStatus(400);
+
+    if (!req.session || !req.session.userID) return res.sendStatus(401);
+
+    database.models.User.findID(req.session.userID).then(actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        database.models.Book.findID(req.params.bookID).then(targetBook => {
+            if (!targetBook) return res.sendStatus(404);
+
+            res.send(targetBook.getData());
+        });
+    });
 }).post((req, res) => {
-    // TODO
-    res.send('Upload book.');
+    if (!req.body || !req.body.name || !req.body.path || typeof req.body.name !== 'string' || typeof req.body.path !== 'string')
+        return res.sendStatus(400);
+
+    if (!req.session || !req.session.userID) return res.sendStatus(401);
+
+    database.models.User.findID(req.session.userID).then(actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        if (actionUser.getPermission() >= ENUMS.PERMISSION.ADMIN) {
+            database.models.Book.create({
+                name: req.body.name,
+                path: req.body.path
+            }).then(book => {
+                res.send(book.getData());
+            });
+        } else {
+            res.sendStatus(401);
+        }
+    });
 }).delete((req, res) => {
-    // TODO
-    res.send('Delete book.');
+    if (!req.params || !req.params.bookID) return res.sendStatus(400);
+
+    if (!req.session || !req.session.userID) return res.sendStatus(401);
+
+    database.models.User.findID(req.session.userID).then(actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        if (actionUser.getPermission() >= ENUMS.PERMISSION.ADMIN) {
+            database.models.Book.findID(req.params.bookID).then(targetBook => {
+                if (!targetBook) return res.sendStatus(404);
+
+                targetBook.destroy().then(() => {
+                    res.sendStatus(200);
+                });
+            });
+        } else {
+            res.sendStatus(401);
+        }
+    });
 });
 
 app.route('/user/:userID?').get((req, res) => {
