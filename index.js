@@ -402,18 +402,90 @@ app.route('/class/:classID/member/:userID?/:username?').post((req, res) => {
     });
 });
 
-app.route('/class/:classID/book/:bookID/annotations/:userID').get((req, res) => {
-    // TODO
-    res.send('Get annotations');
+app.route('/class/:classID/book/:bookID/annotations/:userID?').get((req, res) => {
+    if (!req.session || !req.session.userID || !req.params.classID) return res.sendStatus(401);
+    
+    const userID = req.params.userID ? req.params.userID : req.session.userID;
+
+    database.models.User.findID(req.session.userID).then(async actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        if (actionUser.id === userID || await (actionUser.getPermissionForClass(req.params.classID)) >= ENUMS.PERMISSION.TEACHER) {
+            const classUser = await database.models.ClassUser.findClassUser(req.params.classID, userID);
+            
+            if (!classUser) return res.sendStatus(404);
+
+            const targetAnnotations = await database.models.Annotations.findAnnotations(classUser.id, req.params.bookID);
+
+            if (!targetAnnotations) return res.sendStatus(404);
+
+            res.send(await targetAnnotations.getData());
+        } else {
+            res.sendStatus(401);
+        }
+    });
 }).post((req, res) => {
+    if (!req.session || !req.session.userID || !req.params.classID) return res.sendStatus(401);
+    
+    const userID = req.params.userID ? req.params.userID : req.session.userID;
+
+    database.models.User.findID(req.session.userID).then(async actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        if (actionUser.id === userID || await (actionUser.getPermissionForClass(req.params.classID)) >= ENUMS.PERMISSION.TEACHER) {
+            const classUser = await database.models.ClassUser.findClassUser(req.params.classID, userID);
+            const book = await database.models.Book.findID(req.params.bookID);
+
+            if (!classUser || !book) return res.sendStatus(404);
+
+            classUser.addBook(book).then(() => {
+                res.sendStatus(200);
+            });
+        } else {
+            res.sendStatus(401);
+        }
+    });
+}).delete((req, res) => {
+    if (!req.session || !req.session.userID || !req.params.classID) return res.sendStatus(401);
+    
+    const userID = req.params.userID ? req.params.userID : req.session.userID;
+
+    database.models.User.findID(req.session.userID).then(async actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        if (actionUser.id === userID || await (actionUser.getPermissionForClass(req.params.classID)) >= ENUMS.PERMISSION.TEACHER) {
+            const classUser = await database.models.ClassUser.findClassUser(req.params.classID, userID);
+
+            if (!classUser) return res.sendStatus(404);
+
+            const targetAnnotations = await database.models.Annotations.findAnnotations(classUser.id, req.params.bookID);
+
+            if (!targetAnnotations) return res.sendStatus(404);
+
+            targetAnnotations.destroy().then(() => {
+                res.sendStatus(200);
+            });
+        } else {
+            res.sendStatus(401);
+        }
+    });
+});
+
+app.route('/notes/:annotationsID/:noteID?').post((req, res) => {
     // TODO
-    res.send('Create annotations.');
 }).put((req, res) => {
     // TODO
-    res.send('Edit annotations.');
 }).delete((req, res) => {
     // TODO
-    res.send('Delete annotations');
 });
 
 app.listen(config.port, () => {

@@ -13,6 +13,11 @@ class ClassUser extends Model {
 module.exports = {
     model: ClassUser,
     init: sequelize => ClassUser.init({
+        id: {
+            primaryKey: true,
+            type: DataTypes.UUID,
+            defaultValue: Sequelize.UUIDV4
+        },
         permission: {
             type: DataTypes.INTEGER,
             allowNull: false,
