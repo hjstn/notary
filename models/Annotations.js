@@ -30,7 +30,7 @@ module.exports = {
     },
     findID: id => {
         return Class.findByPk(id);
-    }
+    },
     findAnnotations: (ClassUserId, BookId) => {
         return Annotations.findOne({ where: { ClassUserId, BookId } });
     }
