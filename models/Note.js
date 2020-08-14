@@ -22,7 +22,7 @@ module.exports = {
             type: DataTypes.UUID,
             defaultValue: Sequelize.UUIDV4
         },
-        cifRange: {
+        cfiRange: {
             type: DataTypes.STRING,
             allowNull: false
         },

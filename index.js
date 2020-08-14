@@ -481,8 +481,8 @@ app.route('/class/:classID/book/:bookID/annotations/:userID?').get((req, res) =>
 });
 
 app.route('/notes/:annotationsID/:noteID?').post((req, res) => {
-    if (!req.session || !req.session.userID || !req.params.annotationsID || !req.body.cifRange ||!req.body.text ||
-        typeof req.body.cifRange !== 'string' || typeof req.body.text !== 'string') return res.sendStatus(401);
+    if (!req.session || !req.session.userID || !req.params.annotationsID || !req.body.cfiRange || !req.body.text ||
+        typeof req.body.cfiRange !== 'string' || typeof req.body.text !== 'string') return res.sendStatus(400);
     
     const userID = req.params.userID ? req.params.userID : req.session.userID;
 
@@ -497,15 +497,14 @@ app.route('/notes/:annotationsID/:noteID?').post((req, res) => {
         if (!annotations) return res.sendStatus(404);
 
         annotations.createNote({
-            cifRange: req.body.cifRange,
+            cfiRange: req.body.cfiRange,
             text: req.body.text
         }).then(note => {
             res.send(note.getData());
         });
     });
 }).put((req, res) => {
-    if (!req.session || !req.session.userID || !req.params.annotationsID || !req.body.cifRange ||!req.body.text ||
-        typeof req.body.cifRange !== 'string' || typeof req.body.text !== 'string') return res.sendStatus(401);
+    if (!req.session || !req.session.userID || !req.params.annotationsID || !req.params.noteID) return res.sendStatus(400);
     
     const userID = req.params.userID ? req.params.userID : req.session.userID;
 
@@ -519,11 +518,16 @@ app.route('/notes/:annotationsID/:noteID?').post((req, res) => {
 
         if (!note) return res.sendStatus(404);
 
-        res.send(note.getData());
+        if (req.body.cfiRange) note.cfiRange = req.body.cfiRange;
+        if (req.body.text) note.text = req.body.text;
+
+        return note.save().then(() => {
+            res.sendStatus(200);
+        });
     });
 }).delete((req, res) => {
-    if (!req.session || !req.session.userID || !req.params.annotationsID || !req.body.cifRange ||!req.body.text ||
-        typeof req.body.cifRange !== 'string' || typeof req.body.text !== 'string') return res.sendStatus(401);
+    if (!req.session || !req.session.userID || !req.params.annotationsID || !req.body.cfiRange ||!req.body.text ||
+        typeof req.body.cfiRange !== 'string' || typeof req.body.text !== 'string') return res.sendStatus(401);
     
     const userID = req.params.userID ? req.params.userID : req.session.userID;
 
