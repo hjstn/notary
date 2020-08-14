@@ -28,6 +28,9 @@ module.exports = {
     create: data => {
         return Annotations.create(data);
     },
+    findID: id => {
+        return Class.findByPk(id);
+    }
     findAnnotations: (ClassUserId, BookId) => {
         return Annotations.findOne({ where: { ClassUserId, BookId } });
     }

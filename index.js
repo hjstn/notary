@@ -481,11 +481,68 @@ app.route('/class/:classID/book/:bookID/annotations/:userID?').get((req, res) =>
 });
 
 app.route('/notes/:annotationsID/:noteID?').post((req, res) => {
-    // TODO
+    if (!req.session || !req.session.userID || !req.params.annotationsID || !req.body.cifRange ||!req.body.text ||
+        typeof req.body.cifRange !== 'string' || typeof req.body.text !== 'string') return res.sendStatus(401);
+    
+    const userID = req.params.userID ? req.params.userID : req.session.userID;
+
+    database.models.User.findID(req.session.userID).then(async actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        const annotations = await database.models.Annotations.findID(req.params.annotationsID);
+
+        if (!annotations) return res.sendStatus(404);
+
+        annotations.createNote({
+            cifRange: req.body.cifRange,
+            text: req.body.text
+        }).then(note => {
+            res.send(note.getData());
+        });
+    });
 }).put((req, res) => {
-    // TODO
+    if (!req.session || !req.session.userID || !req.params.annotationsID || !req.body.cifRange ||!req.body.text ||
+        typeof req.body.cifRange !== 'string' || typeof req.body.text !== 'string') return res.sendStatus(401);
+    
+    const userID = req.params.userID ? req.params.userID : req.session.userID;
+
+    database.models.User.findID(req.session.userID).then(async actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        const note = await database.models.Note.findID(req.params.noteID);
+
+        if (!note) return res.sendStatus(404);
+
+        res.send(note.getData());
+    });
 }).delete((req, res) => {
-    // TODO
+    if (!req.session || !req.session.userID || !req.params.annotationsID || !req.body.cifRange ||!req.body.text ||
+        typeof req.body.cifRange !== 'string' || typeof req.body.text !== 'string') return res.sendStatus(401);
+    
+    const userID = req.params.userID ? req.params.userID : req.session.userID;
+
+    database.models.User.findID(req.session.userID).then(async actionUser => {
+        if (!actionUser) {
+            delete req.session.userID;
+            return res.sendStatus(401);
+        }
+
+        if (actionUser.id !== userID) return res.sendStatus(401);
+
+        const note = await database.models.Note.findID(req.params.noteID);
+
+        if (!note) return res.sendStatus(404);
+
+        note.destroy().then(() => {
+            res.sendStatus(200);
+        });
+    });
 });
 
 app.listen(config.port, () => {
